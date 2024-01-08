@@ -55,7 +55,8 @@ async function getCameraFeed(playerId, feed) {
 
             card.classList.add('featured');
             container.prepend(card);
-            window.scrollY(0);
+
+            window.scrollTo(0, 0);
         }
     });
 
@@ -121,6 +122,7 @@ async function startCameraFeeds() {
                         id = 3;
                         break;
                 }
+
                 let camFeed = new WebcamFeed(id, cameraLocation, cameraId);
                 feeds.push(camFeed);
             }
