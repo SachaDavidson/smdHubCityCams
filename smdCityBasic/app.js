@@ -1,32 +1,33 @@
 const feeds = [];
 
+function addEvent(elem, event, func) {
+    if (typeof window.event !== 'undefined') {
+        elem.attachEvent('on' + event, func);
+    } else {
+        elem.addEventListener(event, func, false);
+    }
+}
+
+function showJpegFrame(jpeg, serverUrl, token, id) {
+    jpeg.src = serverUrl + "/Jpeg/" + id + "?authToken=" + token + "&" + new Date().getTime();
+}
+
+async function initCamera(jpeg, serverUrl, token, id, interval) {
+    addEvent(jpeg, 'load', async function () {
+        await new Promise(resolve => setTimeout(resolve, interval));
+        showJpegFrame(jpeg, serverUrl, token, id);
+    });
+
+    showJpegFrame(jpeg, serverUrl, token, id);
+}
+
+
 /**
  * Gets a Camera Feed by its ID and displays it based on the provided Player ID
  * @param {string} playerId The HTML element ID of the JPEG
  * @param {number} id The Object ID Of the Camera
  */
-async function getCameraFeed(playerId, id) {
-    function addEvent(elem, event, func) {
-        if (typeof window.event !== 'undefined') {
-            elem.attachEvent('on' + event, func);
-        } else {
-            elem.addEventListener(event, func, false);
-        }
-    }
-
-    function showJpegFrame(jpeg, serverUrl, token, id) {
-        jpeg.src = serverUrl + "/Jpeg/" + id + "?authToken=" + token + "&" + new Date().getTime();
-    }
-
-    async function initCamera(jpeg, serverUrl, token, id, interval) {
-        addEvent(jpeg, 'load', async function () {
-            await new Promise(resolve => setTimeout(resolve, interval));
-            showJpegFrame(jpeg, serverUrl, token, id);
-        });
-
-        showJpegFrame(jpeg, serverUrl, token, id);
-    }
-
+async function getCameraFeed(playerId, id, cameraLocation) {
     const container = document.getElementById("camera-container");
 
     if (!container) {
@@ -34,9 +35,14 @@ async function getCameraFeed(playerId, id) {
         return;
     }
 
+    const card = document.createElement("div");
     const jpeg = document.createElement("img");
     jpeg.id = playerId;
-    container.appendChild(jpeg);
+    card.classList.add("card");
+    // Hey, me. Fix your async code. Thanks.
+    // card.append(cameraLocation);
+    card.appendChild(jpeg);
+    container.appendChild(card);
 
     await initCamera(jpeg, "https://webcams.moncton.ca:8100", "1638a0fd-835e-4066-9cb1-d62ded24c2b1", id, 40);
 }
@@ -61,9 +67,8 @@ async function fetchWebcamsData() {
             for (const feature of data.features) {
                 if (feature.attributes.URL !== "https://webcams.moncton.ca:8001/borepark/borepark-live.htm") {
                     let id = feature.attributes.OBJECTID;
-                    let location = feature.attributes.Location;
-                    let cameraid = feature.attributes.CameraID;
-                    let camFeed = new WebcamFeed(id, location, cameraid);
+                    let cameraLocation = feature.attributes.Location;
+                    let camFeed = new WebcamFeed(id, cameraLocation);
                     feeds.push(camFeed);
                 }
             }
@@ -78,10 +83,9 @@ async function fetchWebcamsData() {
 
 async function startCameraFeeds() {
     await fetchWebcamsData();
-
     for (const feed of feeds) {
         try {
-            await getCameraFeed(`jpeg_${feed.id}`, feed.id);
+            await getCameraFeed(`jpeg_${feed.id}`, feed.id, feed.cameraLocation);
         } catch (error) {
             console.error(`Error initializing camera feed for ID ${feed.id}:`, error);
         }
@@ -89,10 +93,9 @@ async function startCameraFeeds() {
 }
 
 class WebcamFeed {
-    constructor(id, location, cameraid) {
+    constructor(id, cameraLocation) {
         this.id = id;
-        this.location = location;
-        this.cameraid = cameraid;
+        this.cameraLocation = cameraLocation;
     }
 }
 
