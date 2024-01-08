@@ -21,13 +21,7 @@ async function initCamera(jpeg, serverUrl, token, id, interval) {
     showJpegFrame(jpeg, serverUrl, token, id);
 }
 
-
-/**
- * Gets a Camera Feed by its ID and displays it based on the provided Player ID
- * @param {string} playerId The HTML element ID of the JPEG
- * @param {number} id The Object ID Of the Camera
- */
-async function getCameraFeed(playerId, id, cameraLocation) {
+async function getCameraFeed(playerId, feed) {
     const container = document.getElementById("camera-container");
 
     if (!container) {
@@ -37,20 +31,18 @@ async function getCameraFeed(playerId, id, cameraLocation) {
 
     const card = document.createElement("div");
     const jpeg = document.createElement("img");
+    const title = document.createElement("h3");
+
     jpeg.id = playerId;
     card.classList.add("card");
-    // Hey, me. Fix your async code. Thanks.
-    // card.append(cameraLocation);
+    title.innerText = feed.cameraLocation;
+    card.append(title);
     card.appendChild(jpeg);
     container.appendChild(card);
 
-    await initCamera(jpeg, "https://webcams.moncton.ca:8100", "1638a0fd-835e-4066-9cb1-d62ded24c2b1", id, 40);
+    await initCamera(jpeg, "https://webcams.moncton.ca:8100", "1638a0fd-835e-4066-9cb1-d62ded24c2b1", feed.id, 40);
 }
 
-/**
- * Fetches the Webcam Data from open.moncton.ca
- * @returns City of Moncton Webcam Data as an Object
- */
 async function fetchWebcamsData() {
     const url = "https://services1.arcgis.com/E26PuSoie2Y7bbyI/arcgis/rest/services/Webcams/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json";
 
@@ -63,17 +55,6 @@ async function fetchWebcamsData() {
 
         const data = await response.json();
 
-        if (!!data.features) {
-            for (const feature of data.features) {
-                if (feature.attributes.URL !== "https://webcams.moncton.ca:8001/borepark/borepark-live.htm") {
-                    let id = feature.attributes.OBJECTID;
-                    let cameraLocation = feature.attributes.Location;
-                    let camFeed = new WebcamFeed(id, cameraLocation);
-                    feeds.push(camFeed);
-                }
-            }
-        }
-
         return data;
     } catch (error) {
         console.error("Error fetching webcam data:", error);
@@ -82,20 +63,63 @@ async function fetchWebcamsData() {
 }
 
 async function startCameraFeeds() {
-    await fetchWebcamsData();
-    for (const feed of feeds) {
+    const data = await fetchWebcamsData();
+
+    if (data.features) {
+        for (const feature of data.features) {
+            if (feature.attributes.URL !== "https://webcams.moncton.ca:8001/borepark/borepark-live.htm") {
+                let cameraLocation = feature.attributes["Location"];
+                let cameraId = feature.attributes["CameraID"];
+                let id = 0;
+                switch (cameraId) {
+                    case "CAM007":
+                        id = 5;
+                        break;
+                    case "CAM003":
+                        id = 1;
+                        break;
+                    case "CAM006":
+                        id = 4;
+                        break;
+                    case "CAM008":
+                        id = 6;
+                        break;
+                    case "CAM001":
+                        id = 2;
+                        break;
+                    case "CAM002":
+                        id = 8;
+                        break;
+                    case "CAM009":
+                        id = 7;
+                        break;
+                    case "CAM004":
+                        id = 0;
+                        break;
+                    default:
+                        id = 3;
+                        break;
+                }
+                let camFeed = new WebcamFeed(id, cameraLocation, cameraId);
+                feeds.push(camFeed);
+            }
+        }
+    }
+
+    feeds.forEach(feed => {
         try {
-            await getCameraFeed(`jpeg_${feed.id}`, feed.id, feed.cameraLocation);
+            getCameraFeed(`jpeg_${feed.id}`, feed);
         } catch (error) {
             console.error(`Error initializing camera feed for ID ${feed.id}:`, error);
         }
-    }
+    });
 }
 
 class WebcamFeed {
-    constructor(id, cameraLocation) {
+    constructor(id, cameraLocation, camId) {
         this.id = id;
         this.cameraLocation = cameraLocation;
+        this.camId = camId;
     }
 }
 
