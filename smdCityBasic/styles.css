@@ -2,17 +2,23 @@
     box-sizing: border-box;
 }
 
+body{
+    margin: 0;
+}
+
 #camera-container {
     display: grid;
     grid-template-columns: auto auto auto;
-    background-color: #2196F3;
+    background-color: #1e4565;
     color: #fff;
     font-size: large;
     padding: 1rem;
+    gap: 1em;
 }
 
 .card {
-    border: 1px solid rgba(0, 0, 0, 0.8);
+    background-color: rgb(70, 130, 180);
+    border-radius: 1em;
     padding-top: .5rem;
     text-align: center;
 }
@@ -23,11 +29,27 @@ img {
     height: 25rem;
 }
 
+.featured {
+    grid-column: span 3;
+    grid-row: span 2;
+    z-index: 10;
+}
+
+.featured img {
+    height: 85dvh;
+}
+
 @media screen and (max-width: 1025px) {
-    #camera-container{
+    #camera-container {
         display: block;
     }
-    img{
+
+    img {
         height: max-content;
+    }
+
+    .featured {
+        grid-column: auto;
+        grid-row: auto;
     }
 }

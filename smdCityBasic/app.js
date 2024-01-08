@@ -21,6 +21,7 @@ async function initCamera(jpeg, serverUrl, token, id, interval) {
     showJpegFrame(jpeg, serverUrl, token, id);
 }
 
+
 async function getCameraFeed(playerId, feed) {
     const container = document.getElementById("camera-container");
 
@@ -36,8 +37,28 @@ async function getCameraFeed(playerId, feed) {
     jpeg.id = playerId;
     card.classList.add("card");
     title.innerText = feed.cameraLocation;
-    card.append(title);
     card.appendChild(jpeg);
+    card.append(title);
+
+    addEvent(jpeg, 'click', function () {
+        const container = document.getElementById('camera-container');
+        const card = jpeg.parentElement;
+
+        if (card.classList.contains('featured')) {
+            card.classList.remove('featured');
+            container.appendChild(card);
+        } else {
+            const elements = document.querySelectorAll('*');
+            elements.forEach((element) => {
+              element.classList.remove('featured');
+            });
+
+            card.classList.add('featured');
+            container.prepend(card);
+            window.scrollY(0);
+        }
+    });
+
     container.appendChild(card);
 
     await initCamera(jpeg, "https://webcams.moncton.ca:8100", "1638a0fd-835e-4066-9cb1-d62ded24c2b1", feed.id, 40);
