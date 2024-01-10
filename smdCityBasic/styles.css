@@ -36,7 +36,7 @@ img {
 }
 
 .featured img {
-    height: 85dvh;
+    height: 50rem;
 }
 
 @media screen and (max-width: 1025px) {
@@ -44,12 +44,16 @@ img {
         display: block;
     }
 
-    img {
-        height: max-content;
+    .featured {
+        display: block;
     }
 
-    .featured {
-        grid-column: auto;
-        grid-row: auto;
+    img {
+        height: auto;
     }
+
+    .featured img{
+        height: 15rem;
+    }
+
 }
